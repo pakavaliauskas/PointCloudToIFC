@@ -1,3 +1,4 @@
+import sklearn
 import laspy
 import scipy
 import numpy as np
@@ -25,7 +26,7 @@ def frange(start, stop, step):
     #ground points grid filter
 n = 100 #grid step
 dataset_Z_filtered = dataset[[0]]
-zfiltered = (dataset[ : , 2].max() - dataset[ : , 2].min())/10
+zfiltered = (dataset[ : , 2].max() - dataset[ : , 2].min())/1.2
 
 print('zfiltered = ' , zfiltered)
 
@@ -64,6 +65,31 @@ print('X range = ', dataset[ : , 0].max() - dataset[ : , 0].min())
 
 print('X max = ', dataset[ : , 0].max(), 'X min = ', dataset[ : , 0].min())
 
-dataset = preprocessing.normalize(dataset)
+dataset = preprocessing.normalize(dataset_Z_filtered)
 
-clustering = DBSCAN(eps=2, min_samples=5, leaf_size=30).fit(dataset)
+clustering = DBSCAN(eps=2, min_samples=5, leaf_size=30).fit(dataset_Z_filtered)
+
+core_samples_mask = np.zeros_like(clustering.labels_, dtype=bool)
+core_samples_mask[clustering.core_sample_indices_] = True
+labels = clustering.labels_
+# Number of clusters in labels, ignoring noise if present.
+n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
+n_noise_ = list(labels).count(-1)
+print('Estimated number of clusters: %d' % n_clusters_)
+print('Estimated number of noise points: %d' % n_noise_)
+
+# Black removed and is used for noise instead.
+fig = plt.figure(figsize=[100, 50])
+ax = fig.add_subplot(111, projection='3d')
+unique_labels = set(labels)
+colors = [plt.cm.Spectral(each)
+  for each in np.linspace(0, 1, len(unique_labels))]
+for k, col in zip(unique_labels, colors):
+  if k == -1:
+    # Black used for noise.
+    col = [1, 0, 0, 1]
+  class_member_mask = (labels == k)
+  xyz = dataset_Z_filtered[class_member_mask & core_samples_mask]
+  ax.scatter(xyz[:, 0], xyz[:, 1], xyz[:, 2], c=col, marker='.')
+plt.title('Estimated number of cluster: %d' % n_clusters_)
+plt.show()
