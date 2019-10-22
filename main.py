@@ -26,7 +26,7 @@ def frange(start, stop, step):
     #ground points grid filter
 n = 100 #grid step
 dataset_Z_filtered = dataset[[0]]
-zfiltered = (dataset[ : , 2].max() - dataset[ : , 2].min())/1.2
+zfiltered = (dataset[ : , 2].max() - dataset[ : , 2].min())/1.33
 
 print('zfiltered = ' , zfiltered)
 
